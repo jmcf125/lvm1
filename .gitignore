@@ -1,0 +1,5 @@
+.*.sw*
+*.zip
+__pycache__
+*.aux
+*.log

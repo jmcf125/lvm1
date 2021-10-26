@@ -1,0 +1,30 @@
+Note-se como a simplificações que fazemos aqui são válidas:
+
+afirmamos que
+$$
+   p_{0,0,a}\land\land_{i=0\\i > a}^{n-1} \lnot p_{0,0,i}
+$$
+é equivalente a
+$$
+   p_{0,0,a}\land\land_{i=0\\i\neq a}^{n-1} \lnot p_{0,0,i}
+$$
+na presença das restantes restrições
+
+(se calhar isto abaixo não interessa, mas enfim)
+contudo, simplificando restrições $a$ para $a'$, $b$ para $b'$, etc.,
+pode ser que:
+$$
+   a\land b\land c\land\cdots
+   \iff
+   a'\land b\land c\land\cdots
+   \iff
+   a\land b'\land c\land\cdots
+   \iff
+   a\land b\land c'\land\cdots
+$$
+mas que:
+$$
+   a\land b\land c\land\cdots
+   a'\land b'\land c'\land\cdots
+$$
+portanto temos que ter cuidado
