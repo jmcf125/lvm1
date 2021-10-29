@@ -15,7 +15,7 @@ def sudoku(P):
     l = len(P)
     #   Inicializa matriz de arrays (9x9 matriz com cada entry sendo um array de 9 numeros)
     Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(l)] for j in range(l)] for i in range(l)]
-    print(Prop)
+    #print(Prop)
     for i in range(l):
         for j in range(l):
             if(P[i][j]!=0):
@@ -25,7 +25,7 @@ def sudoku(P):
 
     # === Conditions === #
 
-    # -- Pelo menos um numero em cada culula
+    # -- Pelo menos um numero em cada célula
     for i in range(l):
         for j in range(l):
             s.add(Or(Prop[i][j]))   #Prop[i][j] = [p_i_j_1, p_i_j_2, ..., p_i_j_9]  <--> p_i_j_1 V p_i_j_2 V ...
@@ -72,6 +72,8 @@ def print_board(model, P):
     for p in props:
         P[int(p[0])][int(p[1])] = int(p[2])
     print(P)
+
+    #Imprime tabuleiro
     for i in range(len(P)):
         for j in range(len(P)):
             print(P[i][j], end=" ")
@@ -88,10 +90,10 @@ def print_board(model, P):
 
 
 def main():
-    Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(3)] for j in range(3)] for i in range(3)]
+    Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,4)] for j in range(3)] for i in range(3)]
     #print(Prop)
     #print(Prop[0][0][2])
-    P = [[0, 1, 0], [1, 3, 2], [0, 0, 1]]
+    P = [[1, 2, 3], [0, 3, 0], [2, 0, 1]]
     print_board(P)
     sudoku(P)
 
