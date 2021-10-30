@@ -4,10 +4,10 @@ def excepto(R,E):
     R2 = list(R).copy()
 
     for r in E:
-        #try:
+        try:
             R2.remove(r)
-        #except ValueError:  # ignorar remoção de valores ausentes
-            #pass
+        except ValueError:  # ignorar remoção de valores ausentes
+            pass
 
     return R2
 
@@ -23,8 +23,9 @@ def sums(R,t):
     for S in partes(R):
         if sum(S) == t:
             s.add(And([p[r] for r in S]))
-            s.add(And([Not[p[r]] for r in excepto(R,S)]))
             break
+        #else:
+            #s.add(Not(And([p[r] for r in excepto(R,S)])))
 
     check = s.check()
 
@@ -33,8 +34,8 @@ def sums(R,t):
 
 
 def main():
-    R = range(1,5)
-    t = 6
+    R = range(1,9)
+    t = 30
 
     S = sums(R,t)
 
