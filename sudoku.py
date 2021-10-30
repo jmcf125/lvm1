@@ -1,20 +1,21 @@
+# -*- coding: future_fstrings -*-
 from z3 import *
 
-# P_expl = [[5,3,0,0,7,0,0,0,0],
-#           [6,0,0,1,9,5,0,0,0],
-#           [0,9,8,0,0,0,0,6,0],
-#           [8,0,0,0,6,0,0,0,3],
-#           [4,0,0,8,0,3,0,0,1],
-#           [7,0,0,0,2,0,0,0,6],
-#           [0,6,0,0,0,0,2,8,0],
-#           [0,0,0,4,1,9,0,0,5],
-#           [0,0,0,0,8,0,0,7,9]]
+P_expl = [[5,3,0,0,7,0,0,0,0],
+          [6,0,0,1,9,5,0,0,0],
+          [0,9,8,0,0,0,0,6,0],
+          [8,0,0,0,6,0,0,0,3],
+          [4,0,0,8,0,3,0,0,1],
+          [7,0,0,0,2,0,0,0,6],
+          [0,6,0,0,0,0,2,8,0],
+          [0,0,0,4,1,9,0,0,5],
+          [0,0,0,0,8,0,0,7,9]]
 
 def sudoku(P):
     s = Solver()
     l = len(P)
     #   Inicializa matriz de arrays (9x9 matriz com cada entry sendo um array de 9 numeros)
-    Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,l+1)] for j in range(l)] for i in range(l)]
+    Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(l)] for j in range(l)] for i in range(l)]
     #print(Prop)
     for i in range(l):
         for j in range(l):
@@ -38,13 +39,13 @@ def sudoku(P):
                     s.add(Or( Not(Prop[i][j][k]), Not(Prop[i][j][m]) ))
 
 
-    if(s.check()==sat):
-       #print(s.model())
-       print_board(s.model(), P)
-    return
-    # check = s.check()
-    #
-    # return unsat if check == unsat else s.model()
+    #if(s.check()==sat):
+    #    #print(s.model())
+    #    print_board(s.model(), P)
+    #return
+    check = s.check()
+
+    return unsat if check == unsat else s.model()
 
 
 def well_posed(P):
@@ -53,7 +54,7 @@ def well_posed(P):
 
     return sol != unsat and sudoku(And(P, map(Not, sol))) != unsat
 
-#esta implementação altera o valor de S, mas não deve haver problema
+# esta implementação altera o valor de S, mas não deve haver problema
 def remove(S, pat):
     idxs = range(len(S))
     for i in idxs:
@@ -67,7 +68,7 @@ def generate(S, pat):
     if well_posed(P):
         return P
     else:
-        print("Remover o padrão do puzzle pedido não resulta num problema bem-posto.")
+        raise ValueError("Remover o padrão do puzzle pedido não resulta num problema bem-posto.")
 
 def print_board(model, P):
     props = [[p.name()[2], p.name()[4], p.name()[6]] for p in model.decls() if model[p]]
@@ -96,14 +97,12 @@ def main():
     #print(Prop)
     #print(Prop[0][0][2])
     P = [[1, 2, 3], [0, 3, 0], [2, 0, 1]]
-    #print_board(P)
-    sudoku(P)
+    modelo = sudoku(P)
 
-
+    if modelo != unsat:
+        print_board(modelo, P)
 
     return
-
-
 
 if __name__ == '__main__':
     main()
