@@ -13,8 +13,10 @@ from z3 import *
 def sudoku(P):
     s = Solver()
     l = len(P)
+
     # -- Inicializa matriz de arrays (9x9 matriz com cada entry um array de 9 numeros)
     Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,l+1)] for j in range(l)] for i in range(l)]
+
     #print(Prop)
 
     # -- Adiciona como condicoes os numeros ja presentes no tabuleiro
@@ -83,8 +85,7 @@ def well_posed(P):
     return sol != unsat and sudoku(And(P, map(Not, sol))) != unsat
 
 
-
-#esta implementação altera o valor de S, mas não deve haver problema
+# esta implementação altera o valor de S, mas não deve haver problema
 def remove(S, pat):
     idxs = range(len(S))
     for i in idxs:
@@ -100,7 +101,7 @@ def generate(S, pat):
     if well_posed(P):
         return P
     else:
-        print("Remover o padrão do puzzle pedido não resulta num problema bem-posto.")
+        raise ValueError("Remover o padrão do puzzle pedido não resulta num problema bem-posto.")
 
 
 
@@ -130,6 +131,7 @@ def main():
     Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,4)] for j in range(3)] for i in range(3)]
     #print(Prop)
     #print(Prop[0][0][2])
+
     P = [[5, 3, 0, 0, 7, 0, 0, 0, 0],
          [6, 0, 0, 1, 9, 5, 0, 0, 0],
          [0, 9, 8, 0, 0, 0, 0, 6, 0],
@@ -147,10 +149,7 @@ def main():
     sudoku(P)
 
 
-
     return
-
-
 
 if __name__ == '__main__':
     main()
