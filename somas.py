@@ -4,7 +4,10 @@ def excepto(R,E):
     R2 = list(R).copy()
 
     for r in E:
-        R2.remove(r)
+        #try:
+            R2.remove(r)
+        #except ValueError:  # ignorar remoção de valores ausentes
+            #pass
 
     return R2
 
@@ -16,7 +19,7 @@ def sums(R,t):
     s = Solver()
     p = {r: Bool('p_'+str(r)) for r in R}
 
-    print(partes(R))
+    #print(partes(R))
     for S in partes(R):
         if sum(S) == t:
             s.add(And([p[r] for r in S]))
@@ -30,7 +33,7 @@ def sums(R,t):
 
 
 def main():
-    R = range(1,4)
+    R = range(1,5)
     t = 6
 
     S = sums(R,t)
