@@ -1,23 +1,21 @@
 from z3 import *
 
-# P_expl = [[5,3,0,0,7,0,0,0,0],
-#           [6,0,0,1,9,5,0,0,0],
-#           [0,9,8,0,0,0,0,6,0],
-#           [8,0,0,0,6,0,0,0,3],
-#           [4,0,0,8,0,3,0,0,1],
-#           [7,0,0,0,2,0,0,0,6],
-#           [0,6,0,0,0,0,2,8,0],
-#           [0,0,0,4,1,9,0,0,5],
-#           [0,0,0,0,8,0,0,7,9]]
+
+prev_model = []
+# -- Inicializa matriz de arrays (9x9 matriz com cada entry um array de 9 numeros)
+Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,10)] for j in range(9)] for i in range(9)]
+s = Solver()
 
 def sudoku(P):
-    s = Solver()
+    global prev_model
+    global Prop
+    global s
     l = len(P)
+    s.reset()
 
-    # -- Inicializa matriz de arrays (9x9 matriz com cada entry um array de 9 numeros)
-    Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,l+1)] for j in range(l)] for i in range(l)]
-
-    #print(Prop)
+    # -- Adiciona restricoes do modelo anterior
+    if(len(prev_model)>0):
+        s.add(Or([Not(p) for p in prev_model]))
 
     # -- Adiciona como condicoes os numeros ja presentes no tabuleiro
     for i in range(l):
@@ -25,7 +23,7 @@ def sudoku(P):
             if(P[i][j]!=0):
                 s.add(Prop[i][j][ P[i][j]-1 ])
 
-    #print(s)
+
 
     # === CONDICOES === #
 
@@ -48,8 +46,6 @@ def sudoku(P):
         for k in range(l):
             c=0
             for j in range(l):
-                # if(k==1):
-                #     #print([i,j])
                 if(j%3 == 0 and j!=0 ):
                     c += 3
                 for m in range(j+1, l):
@@ -59,80 +55,93 @@ def sudoku(P):
                     for p in range(c, c+3):
                         if(p!= j):          #escusa de adicionar condicoes aos elementos da mesma coluna pois fe-lo antes
                             s.add(Or( Not(Prop[i][j][k]), Not(Prop[n][p][k])))
-                            #print([Prop[i][j][k], Prop[n][p][k]])
-
-
-
 
 
 
     if(s.check()==sat):
-       #print(s.model())
-       print_board(s.model(), P)
+        print_board(s.model())
+        return [sat,s.model()]
     else:
        print("unsat")
-    return
-    # check = s.check()
-    #
-    # return unsat if check == unsat else s.model()
+       return [unsat, []]
 
 
 
 def well_posed(P):
-    sol = sudoku(P)
-    #tem_sol = sol != unsat
+    global prev_model
+    prev_model=[]
+    # Corre sudoku(P) sem restricoes de modelo anterior
+    result = sudoku(P)
+    if(result[0] == unsat):
+        return
 
-    return sol != unsat and sudoku(And(P, map(Not, sol))) != unsat
+    model = result[1]
+    prev_model = [Prop[ int(p.name()[2]) ][ int(p.name()[4]) ][ int(p.name()[6])-1 ] for p in model.decls() if model[p]]
+    #Se o sudoku e unsat entao nao tem mais solucoes
+    if(sudoku(P)[0] == unsat):
+        print("The sudoku puzzle is well_posed")
+        prev_model=[]
+        return True
+
+    print("The sudoku puzzle has more than one solution")
+    prev_model=[]
+    return False
 
 
-# esta implementação altera o valor de S, mas não deve haver problema
 def remove(S, pat):
-    idxs = range(len(S))
-    for i in idxs:
-        for j in idxs:
-            if pat[i][j] == 1:
-                S[i][j] = 0
+    l=len(S)
+    for i in range(l):
+        for j in range(l):
+            S[i][j] *= pat[i][j]
+
     return S
 
 
 
 def generate(S, pat):
+    if not S:
+        return
     P = remove(S, pat)
+    print("New P:")
+    print(P)
     if well_posed(P):
         return P
     else:
-        raise ValueError("Remover o padrão do puzzle pedido não resulta num problema bem-posto.")
+        print("Remover o padrão do puzzle pedido não resulta num problema bem-posto.")
+    return
 
 
 
-def print_board(model, P):
+def print_board(model):
+    board = [[0 for i in range(9)] for j in range(9)]
     props = [[p.name()[2], p.name()[4], p.name()[6]] for p in model.decls() if model[p]]
     for p in props:
-        P[int(p[0])][int(p[1])] = int(p[2])
-    #print(P)
-    print("\n\n")
+        board[int(p[0])][int(p[1])] = int(p[2])
     #Imprime tabuleiro
-    for i in range(len(P)):
-        for j in range(len(P)):
-            print(P[i][j], end=" ")
+    print("\n\n")
+    for i in range(len(board)):
+        for j in range(len(board)):
+            print(board[i][j], end=" ")
         print("")
-
-    #print(props)
-
-
-    #print("\n\n\n")
-    #print(model)
-
 
     return
 
 
-def main():
-    Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,4)] for j in range(3)] for i in range(3)]
-    #print(Prop)
-    #print(Prop[0][0][2])
+# Transforma modelo em tabuleiro
+def solution_board(model):
+    if(len(model)==0):
+        return
+    P = [[0 for i in range(9)] for j in range(9)]
+    values = [[int(p.name()[2]), int(p.name()[4]), int(p.name()[6])] for p in model.decls() if model[p]]
+    for v in values:
+        P[v[0]][v[1]] = v[2]
+    return P
 
-    P = [[5, 3, 0, 0, 7, 0, 0, 0, 0],
+
+
+def main():
+
+    P1 = [[5, 3, 0, 0, 7, 0, 0, 0, 0],
          [6, 0, 0, 1, 9, 5, 0, 0, 0],
          [0, 9, 8, 0, 0, 0, 0, 6, 0],
          [8, 0, 0, 0, 6, 0, 0, 0, 3],
@@ -141,12 +150,47 @@ def main():
          [0, 6, 0, 0, 0, 0, 2, 8, 0],
          [0, 0, 0, 4, 1, 9, 0, 0, 5],
          [0, 0, 0, 0, 8, 0, 0, 7, 9]]
-    #print_board(P)
-    for i in range(len(P)):
-        for j in range(len(P)):
-            print(P[i][j], end=" ")
-        print("")
-    sudoku(P)
+
+    P2 = [[0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0],
+         [0,0,0,0,0,0,0,0,0]]
+    pat1 = [[0,0,1,0,0,0,0,0,0],
+           [0,0,0,0,0,0,0,0,0],
+           [0,0,0,0,0,0,0,0,0],
+           [0,0,0,0,0,0,0,0,0],
+           [0,0,0,0,0,0,0,0,0],
+           [0,0,0,0,0,0,0,0,0],
+           [0,0,0,0,0,0,0,0,0],
+           [0,0,0,0,0,0,0,0,0],
+           [0,0,0,0,0,0,0,0,0]]
+    pat2 = [[0,1,1,1,1,1,1,1,1],
+           [0,1,1,1,1,1,1,1,1],
+           [1,1,1,1,1,1,1,1,1],
+           [0,1,1,1,1,1,1,1,1],
+           [0,1,1,1,1,1,1,1,1],
+           [1,1,1,1,1,1,1,1,1],
+           [0,1,1,1,1,1,1,1,1],
+           [0,1,1,1,1,1,1,1,1],
+           [0,1,1,1,1,1,1,1,1]]
+
+    result = sudoku(P1)
+    if(result[0]==sat):
+        model = result[1]
+        generate(solution_board(model), pat2)
+    sudoku(P1)
+    well_posed(P2)
+    result = sudoku(P2)
+    if(result[0]==sat):
+        model = result[1]
+        generate(solution_board(model), pat2)
+    sudoku(P1)
+    sudoku(P2)
 
 
     return
