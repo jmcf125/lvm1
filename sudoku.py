@@ -76,9 +76,14 @@ def sudoku(P):
     #return
     check = s.check()
 
-    if(check == sat):
-       #print(s.model())
-       print_board(s.model(), P)
+    # funciona porque os índices são dígitos :-D
+    props = [[p.name()[2], p.name()[4], p.name()[6]]
+                for p in model.decls() if model[p]]
+    for p in props:
+        P[int(p[0])][int(p[1])] = int(p[2]) + 1
+
+    if (check == sat):
+       print_board(P)
     else:
        print("unsat")
     return
@@ -170,24 +175,13 @@ def generate(S, pat):
 
 
 
-def print_board(model, P):
-    props = [[p.name()[2], p.name()[4], p.name()[6]] for p in model.decls() if model[p]]
-    for p in props:
-        P[int(p[0])][int(p[1])] = int(p[2])
-    #print(P)
-    print("\n\n")
-    #Imprime tabuleiro
+def print_board(P):
     for i in range(len(P)):
         for j in range(len(P)):
             print(P[i][j], end=" ")
+            if j%3 == 2: print(" ", end=" ")
         print("")
-
-    #print(props)
-
-
-    #print("\n\n\n")
-    #print(model)
-
+        if i%3 == 2: print("")
 
     return
 
