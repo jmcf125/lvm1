@@ -97,9 +97,14 @@ def sudoku(P):
     #return
     check = s.check()
 
-    if(check == sat):
-       #print(s.model())
-       print_board(s.model())
+    # funciona porque os índices são dígitos :-D
+    props = [[p.name()[2], p.name()[4], p.name()[6]]
+                for p in model.decls() if model[p]]
+    for p in props:
+        P[int(p[0])][int(p[1])] = int(p[2]) + 1
+
+    if (check == sat):
+       print_board(P)
     else:
        print("unsat")
     return (check, s, l, Prop)
