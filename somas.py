@@ -47,11 +47,20 @@ def sums(R,t):
 
     # Se o último aparece numa posição, não aparece em nenhuma outra.
     # Isto é, os últimos são únicos.
-    for u in R:
-     for r in range(t+1):
+    for u in R:             # u de último (em R)
+     for r in range(t+1):   # r de resto (em [0,t], não nec. em R)
       for w in range(t+1):
         if r != w:
-            s.add(Implies(p[u][r], Not(p[u][w])))
+         s.add(Implies(p[u][r], Not(p[u][w])))
+
+    # Começamos em alguma coisa (já que não podemos ter p_0_t)
+    s.add(Or([p[u][t-u] for u in R if u in range(t+1)]))
+
+    # Não podemos exceder t (mas isto chega?)
+    for u in R:
+     for r in range(t+1):
+      if u + r > t:
+        s.add(Not(p[u][r]))
 
     # Tem de haver algum último número que difira em 0 de t.
     # Ou seja, atingimos t com algum último número.
@@ -60,6 +69,7 @@ def sums(R,t):
     # Queremos exatamente uma maneira de somar para chegar a um qualquer resto r
     # Pode-se ver isto como cortando todos os galhos excepto um na árvore de
     # procura por somas que dão r.
+    # (até podemos querer isto, mas não corresponde ao código)
     for u in R:
      for w in R:
       if u != w:
@@ -71,28 +81,45 @@ def sums(R,t):
     # (isto já é possìvelmente consequência das conds. anteriores)
     for r in range(t+1):
      for u in R:
-      if r + u <= t:
+      if r + u <= t and r != 0:
         #p[r][0] => existe u t.q. p[u][r]
         # no geral:
         # cada (u,r) veio de algum (w,r+u):
-        s.add(Implies(p[u][r], Or([p[w][r+u] for w in R])))
+        # (pois esta não pode dar, u não inclui o valor de r)
+        #s.add(Implies(p[u][r], Or([p[w][r+u] for w in R])))
+        s.add(Implies(p[u][r],
+            Or([p[w][r-w] for w in R
+                          if r-w in range(t+1)])))
+        #s.add(Implies(Or([p[w][r+u] for w in R]), p[u][r]))
         # cada (u,r), vindo de (w,r+u), não veio de (v,r+u) para v != w:
-        for w in R:
-         s.add(Implies(p[u][r], And([
-             Implies(p[w][r+u], Not(p[v][r+u]))
-             for v in R if v != w])))
+        # (isto parece desnecessário)
+        #for w in R:
+         #s.add(Implies(p[u][r], And([
+             ##Implies(p[w][r+u], Not(p[v][r+u]))
+             #for v in R if v != w])))
+        # cada (u,r) vai para um (w,r-w):
+        # (isto não dá o mesmo do que a restr. acima?)
+        #s.add(Implies(p[u][r], Or([p[w][r-w] for w in R])))
 
     check = s.check()
 
-    return False if check == unsat else s.model().decls()
+    print(s)
+
+    def S():
+        props = [q for q in s.model().decls() if s.model()[q]]
+        print(props)
+        # isto só funciona p/ u < 10
+        return [int(str(prop)[2]) for prop in props]
+
+    return False if check == unsat else S()
 
 
 def main():
     #R = range(1,9)
     #t = 30
 
-    R = range(5)
-    t = 10
+    R = [100,1,2,5,3]
+    t = 11
 
     S = sums(R,t)
 
