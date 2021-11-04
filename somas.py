@@ -81,7 +81,8 @@ def sums(R,t):
     # (isto já é possìvelmente consequência das conds. anteriores)
     for r in range(t+1):
      for u in R:
-      if r + u <= t and r != 0:
+      if r - u > 0: # hmm...
+         #if r + u <= t:# and r != 0:
         #p[r][0] => existe u t.q. p[u][r]
         # no geral:
         # cada (u,r) veio de algum (w,r+u):
@@ -118,8 +119,8 @@ def main():
     #R = range(1,9)
     #t = 30
 
-    R = [100,1,2,5,3]
-    t = 11
+    R = [0,1]
+    t = 2
 
     S = sums(R,t)
 
