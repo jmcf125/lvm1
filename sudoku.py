@@ -124,7 +124,8 @@ P_sudoku_var_expl = [4,0,0, 7,0,6, 0,0,9,
 
 
 
-# == NOTE: Recebe um argumento "a mais". Se apenas puder receber P entao 'variantes' pode ser global
+# == NOTE: Recebe um argumento "a mais". Se apenas puder receber P então
+# 'variantes' pode ser global
 def sudoku_var(P, variantes = [1,2]):
     (s, l, Prop) = restrs_usuais(P)
 

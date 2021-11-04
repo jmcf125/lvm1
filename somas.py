@@ -39,9 +39,9 @@ def sums_red_exp(R,t):
     return False if check == unsat else s.model().decls()
 
 
-# Esta é que é a redução polinomial de SUM para SAT
+# Esta é que é a redução polinomial de SUMS para SAT
 def sums(R,t):
-    R = [r for r in R if r != 0]
+    R = [r for r in R if 0 < r <= t]
     s = Solver()
     # p_u_r significa que o último símbolo adicionado foi u para faltar r para
     # a soma atingir t (i.e. a soma atual está em t - r)
@@ -107,13 +107,11 @@ def sums(R,t):
         #s.add(Implies(p[u][r], Or([p[w][r-w] for w in R])))
 
     check = s.check()
-
-    print(s)
+    #print(s)
 
     def S():
         props = [q for q in s.model().decls() if s.model()[q]]
         print(props)
-        # isto só funciona p/ u < 10
         return [int(str(prop).split("_")[1]) for prop in props]
 
     return False if check == unsat else S()
@@ -122,6 +120,8 @@ def sums(R,t):
 def main():
     R = [2**i for i in range(7)]
     R.append(0)
+    R.append(3)
+    R.append(5)
     t = 74
 
     S = sums(R,t)
