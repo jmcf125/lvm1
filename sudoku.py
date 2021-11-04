@@ -5,17 +5,6 @@ prev_model = []
 #Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,10)] for j in range(9)] for i in range(9)]
 #s = Solver()
 
-# def sudoku(P):
-#     global prev_model
-#     global Prop
-#     global s
-#     l = len(P)
-#     s.reset()
-#
-#     # -- Adiciona restricoes do modelo anterior
-#     if(len(prev_model)>0):
-#         s.add(Or([Not(p) for p in prev_model]))
-
 
 def restrs_usuais(P):
     s = Solver()
@@ -78,6 +67,14 @@ def restrs_usuais(P):
                             # elementos da mesma coluna pois fe-lo antes
                             s.add(Or( Not(Prop[i][j][k]), Not(Prop[n][p][k])))
 
+                # i + (2 - i%3) :  i=0 vai ate i=2,  quando i=1 vai ate i=2, quando i=2 salta pq nao e preciso
+                # analogo para qualquer i multiplo de 3
+
+                # Note-se que apenas é preciso adicionar a condição para as linhas inferiores
+                # da regiao pois a mesma linha ja foi adicionada, e as linhas superiores foram
+                # adicionadas quando se iterou pelos simbolos anteriores e se adicionou as condicoes
+                # para a regiao
+
 
     # if(s.check()==sat):
     #     print_board(s.model())
@@ -97,7 +94,7 @@ def sudoku(P):
     #return
     check = s.check()
 
-    # funciona porque os índices são dígitos :-D
+    # funciona porque os índices são dígitos
     props = [[p.name()[2], p.name()[4], p.name()[6]]
                 for p in model.decls() if model[p]]
     for p in props:
@@ -124,7 +121,6 @@ P_sudoku_var_expl = [4,0,0, 7,0,6, 0,0,9,
 
 
 
-# == NOTE: Recebe um argumento "a mais". Se apenas puder receber P entao 'variantes' pode ser global
 def sudoku_var(P, variantes = [1,2]):
     (s, l, Prop) = restrs_usuais(P)
 
