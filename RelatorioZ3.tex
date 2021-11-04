@@ -1,0 +1,57 @@
+\documentclass[a4paper,12pt]{article}
+\begin{document}
+\title{Projeto 1: SAT}
+\author{João Miguel \and Rui Breda}
+\date{\today}
+\maketitle
+\section{Sudoku}
+\subsection{Classic Sudoku}
+\paragraph{Descrição do problema \newline}
+Este exercício do projeto consistiu na modelação e redução do problema do sudoku para SAT. Este problema consiste no seguinte: dado um tabuleiro inicial 9x9, preencher todas as células do tabuleiro com números de 1 a 9 tal que nenhum número se repita na mesma linha, coluna e região (quadrado 3x3).
+\paragraph{Símbolos Proposicionais \newline}
+Uma abordagem à resolução deste problema através do SAT-solver z3 implica que este seja descrito como fórmulas de símbolos proposicionais em CNF (Conjunctive Normal Form). Fórmulas estas que serão testadas face diversas atribuições aos símbolos proposicionais.\newline
+
+Uma vez que se pretende explicitar que nenhuma célula pode ter um número já presente na mesma linha, coluna e região, o número de símbolos proposicionais não poderia ser inferior a 9$\times$9. Como o domínio onde trabalhamos é booleano, cada número que as células podem ter terá que ser um símbolo proposicional, com o valor verdadeiro se o número se encontra na célula e falso coso contrário.\newline
+ 
+Portanto, haverá no total um símbolo por cada célula e por cada número possível, resultando em 9$\times$9$\times$9 símbolos. Assim, os símbolos terão a forma p\textunderscore i\textunderscore j\textunderscore n, 0 $\leq$ i $\leq$ 8 , 0 $\leq$ j $\leq$ 8 e 1 $\leq$ n $\leq$ 9 com i e j os índices da célula no tabuleiro e n um número possível de 1 a 9.
+\paragraph{Condições e restrições \newline}
+Estabelecidos os símbolos proposicionais, é necessário descrever o problema em termos de condições e restrições ás quais este será sujeito.
+Como foi referido anteriormente, cada célula necessita de ter um e um só número. Esta condição pode ser dividida em duas:\newline
+\begin{itemize}
+	\item
+	Cada célula tem pelo menos um número, ou seja, os símbolos da respetiva célula e dos diversos números não podem ser todos simultaneamente falsos
+	
+	\begin{displaymath}
+	\
+	\bigwedge_{0\leq i,j < 9} \bigvee_{1\leq n \leq 9} p \textunderscore i \textunderscore j \textunderscore n
+	\end{displaymath}
+	
+	 \item Cada célula tem no máximo um número. A presença desta condição é justificada pelo facto de, se houver mais do que um número por célula, os restantes números da linha, coluna e região serão influenciados.
+	
+	\begin{displaymath}
+	\
+	\bigwedge_{0\leq i,j < 9} \bigwedge_{1\leq k < m < 9} \lnot p \textunderscore i \textunderscore j \textunderscore k \bigvee \lnot p \textunderscore i \textunderscore j \textunderscore m
+	\end{displaymath}
+	
+	\item Feitas as condições para as células, é necessário implementar as restrições que ditam as regras do puzzle.
+	As seguintes restrições  indicam que uma linha e uma coluna não podem ter um número repetido, com a única diferença entre as duas ser os índices de p.
+	
+	\begin{displaymath}
+	\
+	\bigwedge_{0\leq i < 9} \bigwedge_{1\leq k \leq 9} \bigwedge_{0\leq j < m < 9} \lnot p \textunderscore i \textunderscore j \textunderscore k \bigvee \lnot p \textunderscore i \textunderscore m \textunderscore k
+	\end{displaymath}
+	
+	\begin{displaymath}
+	\
+	\bigwedge_{0\leq i,j < 9} \bigwedge_{1\leq k < m < 9} \lnot p \textunderscore i \textunderscore j \textunderscore k \bigvee \lnot p \textunderscore i \textunderscore j \textunderscore m
+	\end{displaymath}
+	
+	
+\end{itemize}
+
+\subsection{}
+
+
+
+
+\end{document}

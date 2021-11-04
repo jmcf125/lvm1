@@ -11,6 +11,7 @@ def excepto(R,E):
 
     return R2
 
+#Cria powerset do set inicial
 def partes(R):
     ps = [partes(excepto(R,[r])) for r in R]
     return [R] + [S for P in ps for S in P]
@@ -21,7 +22,7 @@ def sums_red_exp(R,t):
     p = {r: Bool('p_'+str(r)) for r in R}
     ok = False
 
-    #print(partes(R))
+    print(partes(R))
     for S in partes(R):
         if sum(S) == t:
             s.add(And([p[r] for r in S]))
@@ -29,10 +30,10 @@ def sums_red_exp(R,t):
             break
         #else:
             #s.add(Not(And([p[r] for r in excepto(R,S)])))
-    
+
     if not ok:
         s.add(And([And(p[r], Not(p[r])) for r in R]))
-    
+
     check = s.check()
 
     return False if check == unsat else s.model().decls()
