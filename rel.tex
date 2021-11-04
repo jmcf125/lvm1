@@ -11,6 +11,7 @@
 \newcommand{\sums}{\texttt{SUMS}\xspace}
 \newcommand{\sat}{\texttt{SAT}\xspace}
 \newcommand{\np}{\textbf{NP}\xspace}
+\newcommand{\code}[1]{\texttt{#1}}
 
 \title{Projeto 1: \sat em {Z3}}
 \author{João Miguel Faria \and Rui Breda Perdigoto}
@@ -39,7 +40,7 @@ presente na mesma linha, coluna e região, o número de símbolos proposicionais
 não poderia ser inferior a $9\times9$. Como o domínio onde trabalhamos é
 booleano, cada número que as células podem ter terá que ser um símbolo
 proposicional, com o valor verdadeiro se o número se encontra na célula e falso
-coso contrário.
+caso contrário.
  
 Portanto, haverá no total um símbolo por cada célula e por cada número
 possível, resultando em 9$\times$9$\times$9 símbolos. Assim, os símbolos terão
@@ -49,7 +50,7 @@ número possível de 1 a 9.
 
 \subsection{Condições e restrições}
 Estabelecidos os símbolos proposicionais, é necessário descrever o problema em
-termos de condições e restrições ás quais este será sujeito.  Como foi referido
+termos de condições e restrições às quais este será sujeito.  Como foi referido
 anteriormente, cada célula necessita de ter um e um só número. Esta condição
 pode ser dividida em duas:
 \begin{itemize}
@@ -61,13 +62,15 @@ pode ser dividida em duas:
            \bigvee_{1\leq n \leq 9} p_{i,j,n}
         \end{align}
      
-     \item Cada célula tem no máximo um número. A presença desta condição é justificada pelo facto de, se houver mais do que um número por célula, os restantes números da linha, coluna e região serão influenciados.
+      \item Cada célula tem no máximo um número. A presença desta condição é
+        justificada pelo facto de, se houver mais do que um número por célula,
+        os restantes números da linha, coluna e região serão influenciados.
         \begin{align}
         \bigwedge_{0\leq i,j < 9}
-         \bigwedge_{1\leq k < m < 9} \lnot p_{i,j,k}
-           \bigvee \lnot p_{i,j,k}
+           \bigwedge_{1\leq k < m < 9}
+           {\lnot p_{i,j,k} \lor \lnot p_{i,j,m}}
         \end{align}
-     
+
       \item Feitas as condições para as células, é necessário implementar as
          restrições que ditam as regras do puzzle.  As seguintes restrições
          indicam que uma linha e uma coluna não podem ter um número repetido,
@@ -75,14 +78,62 @@ pode ser dividida em duas:
          \begin{align}
          \bigwedge_{0\leq i < 9} \bigwedge_{1\leq k \leq 9} \bigwedge_{0\leq j < m
          < 9} \lnot p_{i,j,k}
-         \bigvee \lnot p_{i,j,k}
+         \bigvee \lnot p_{i,m,k}
          \end{align}
 
          \begin{align}
-         \bigwedge_{0\leq i,j < 9} \bigwedge_{1\leq k < m < 9} \lnot p_{i,j,k}
-         \bigvee \lnot p_{i,j,k}
+         \bigwedge_{0\leq i < 9} \bigwedge_{1\leq k < 9} 
+            \bigwedge_{0\leq j < m < 9}
+               \lnot p_{j,i,k} \land \lnot p_{m,i,k}
          \end{align}
+     \item Adicionalmente a não haver repetições de números por linha e coluna,
+        é preciso garantir que nenhum número se repete por região. Portanto,
+        dado um determinado p\textunderscore i\textunderscore j\textunderscore
+        k, os símbolos da mesma região que não estão na mesma linha e coluna
+        (não foram abrangidos pelas condições anteriores) não poderão ter o
+        mesmo número. Nesta expressão, c é o índice da primeira coluna da
+        região e b = i+(2 - i $\bmod$ 3), que representa o índice da última
+        linha da região.
+     \begin{align}
+        \bigwedge_{0\leq i < 9}
+        \bigwedge_{1\leq k \leq 9}
+        \bigwedge_{0\leq j < 9}
+        \bigwedge_{i + 1 \leq n < b}
+        \bigwedge_{c\leq l < c+3} \lnot p_{i,j,k} \lor \lnot p_{n,l,k}
+     \end{align}
+     
+     \item Por fim, é necessário adicionar como condição os números já
+        presentes no tabuleiro inicial que se pretende resolver. Assim, dado um
+        conjunto S com os símbolos proposicionais correspondentes aos números
+        das células do tabuleiro inicial: 
+        \begin{align}
+        \bigwedge_{p\in S} p
+        \end{align}
+     
+     \item Em função de se poder "eliminar" soluções específicas , como é o
+        caso da função \texttt{well\_posed(P)}, estabelece-se a seguinte
+        restrição: dado um conjunto M com os símbolos de uma solução (ou seja
+        com valor verdadeiro):
+     \begin{align}
+     \bigvee_{p\in M} \lnot p
+     \end{align}
 \end{itemize}
+
+\subsection{Funções}
+A implementação recorreu a três funções principais: \code{sudoku},
+\code{well_posed} e \code{generate}.
+
+A função \code{sudoku} gera os símbolos proposicionais, aplica as restrições
+indicadas e verifica se existe solução.
+
+A função \code{well\_posed(P)} corre \code{sudoku(P)} para resolver o tabuleiro
+$P$ e gera o conjunto de símbolos proposicionais da resposta. De seguida, corre
+\code{sudoku(P)} outra vez, que agora aplica a restrição mencionada anteriormente.
+Caso a verificação resulte em unsat, então o tabuleiro possui apenas uma solução,
+pelo que é \code{well\_posed}.
+
+A função \code{generate(S, pat)} remove os elementos de S de acordo com o
+padrão e chama a função \code{well\_posed} com o resultado.
 
 \subsection{Variantes}
 
