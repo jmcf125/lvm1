@@ -5,6 +5,7 @@
 \usepackage{amssymb} % mathbb, varnothing
 \usepackage{amsthm}  % teoremas
 \usepackage{xspace}
+\usepackage{logicpuzzle}
 
 \theoremstyle{definition}
 \newtheorem{defn}{Definição}[section]
@@ -31,6 +32,23 @@
 \newcommand{\sat}{\texttt{SAT}\xspace}
 \newcommand{\np}{\textbf{NP}\xspace}
 \newcommand{\code}[1]{\texttt{#1}}
+
+\newenvironment{sudoku}[1][]{%
+\begin{logicpuzzle}[rows=9,columns=9,#1]
+	\begin{puzzleforeground}
+		\framepuzzle
+		\framearea{black}{(1,1)--(4,1)--(4,4)--(1,4)--cycle}
+		\framearea{black}{(4,1)--(7,1)--(7,4)--(4,4)--cycle}
+		\framearea{black}{(7,1)--(10,1)--(10,4)--(7,4)--cycle}
+		\framearea{black}{(1,4)--(4,4)--(4,7)--(1,7)--cycle}
+		\framearea{black}{(4,4)--(7,4)--(7,7)--(4,7)--cycle}
+		\framearea{black}{(7,4)--(10,4)--(10,7)--(7,7)--cycle}
+		\framearea{black}{(1,7)--(4,7)--(4,10)--(1,10)--cycle}
+		\framearea{black}{(4,7)--(7,7)--(7,10)--(4,10)--cycle}
+		\framearea{black}{(7,7)--(10,7)--(10,10)--(7,10)--cycle}
+	
+	\end{puzzleforeground}
+}{\end{logicpuzzle}}
 
 \title{Projeto 1: \sat em {Z3}}
 \author{João Miguel Faria \and Rui Breda Perdigoto}
@@ -63,8 +81,8 @@ caso contrário.
  
 Portanto, haverá no total um símbolo por cada célula e por cada número
 possível, resultando em 9$\times$9$\times$9 símbolos. Assim, os símbolos terão
-a forma \texttt{p\_i\_j\_n}\_, $0\leq i, j \leq 8$
-e $1 \leq n \leq$ 9 com $i$ e $j$ os índices da célula no tabuleiro e n um
+a forma $p_{i,j,n}$, $0\leq i, j \leq 8$
+e $1 \leq n \leq$ 9 com $i$ e $j$ os índices da célula no tabuleiro e $n$ um
 número possível de 1 a 9.
 
 \subsection{Condições e restrições}
@@ -97,7 +115,7 @@ pode ser dividida em duas:
          \begin{align}
          \bigwedge_{0\leq i < 9} \bigwedge_{1\leq k \leq 9} \bigwedge_{0\leq j < m
          < 9} \lnot p_{i,j,k}
-         \bigvee \lnot p_{i,m,k}
+         \lor \lnot p_{i,m,k}
          \end{align}
 
          \begin{align}
@@ -105,13 +123,14 @@ pode ser dividida em duas:
             \bigwedge_{0\leq j < m < 9}
                \lnot p_{j,i,k} \land \lnot p_{m,i,k}
          \end{align}
+         
      \item Adicionalmente a não haver repetições de números por linha e coluna,
         é preciso garantir que nenhum número se repete por região. Portanto,
-        dado um determinado p\textunderscore i\textunderscore j\textunderscore
-        k, os símbolos da mesma região que não estão na mesma linha e coluna
+        dado um determinado $p_{i,j,k}$,
+        os símbolos da mesma região que não estão na mesma linha e coluna
         (não foram abrangidos pelas condições anteriores) não poderão ter o
-        mesmo número. Nesta expressão, c é o índice da primeira coluna da
-        região e b = i+(2 - i $\bmod$ 3), que representa o índice da última
+        mesmo número. Nesta expressão, $c$ é o índice da primeira coluna da
+        região e $b = i+(2 - i \bmod 3)$, que representa o índice da última
         linha da região.
      \begin{align}
         \bigwedge_{0\leq i < 9}
@@ -123,15 +142,15 @@ pode ser dividida em duas:
      
      \item Por fim, é necessário adicionar como condição os números já
         presentes no tabuleiro inicial que se pretende resolver. Assim, dado um
-        conjunto S com os símbolos proposicionais correspondentes aos números
+        conjunto $S$ com os símbolos proposicionais correspondentes aos números
         das células do tabuleiro inicial: 
         \begin{align}
         \bigwedge_{p\in S} p
         \end{align}
      
-     \item Em função de se poder "eliminar" soluções específicas , como é o
+     \item Em função de se poder "eliminar" soluções específicas, como é o
         caso da função \texttt{well\_posed(P)}, estabelece-se a seguinte
-        restrição: dado um conjunto M com os símbolos de uma solução (ou seja
+        restrição: dado um conjunto $M$ com os símbolos de uma solução (ou seja
         com valor verdadeiro):
      \begin{align}
      \bigvee_{p\in M} \lnot p
@@ -153,6 +172,83 @@ pelo que é \code{well\_posed}.
 
 A função \code{generate(S, pat)} remove os elementos de S de acordo com o
 padrão e chama a função \code{well\_posed} com o resultado.
+
+\subsection{Execução do programa}
+Apresentamos agora exemplos da execução das funções mencionadas com o propósito
+de mostrar a sua correção. 
+
+\begin{figure}
+	\caption{Tabuleiro inicial}
+	\centering
+	\begin{sudoku}[scale=.5]
+		\setrow{1}{, , , , 8, , , 7, 9}
+		\setrow{2}{, , , 4, 1, 9, , , 5}
+		\setrow{3}{, 6, , , , , 2, 8, }
+		\setrow{4}{7, , , , 2, , , , 6}
+		\setrow{5}{4, , , 8, , 3, , , 1}
+		\setrow{6}{8, , , , 6, , , , 3}
+		\setrow{7}{, 9, 8, , , , , 6, }
+		\setrow{8}{6, , , 1, 9, 5, , , }
+		\setrow{9}{5, 3, , , 7, , , , }
+	\end{sudoku}
+\end{figure}
+\space
+
+\begin{figure}
+   \caption{Puzzle resolvido após \code{sudoku(P)}}
+	\centering
+	\begin{sudoku}[scale=.5]
+	\setrow{1}{3, 4, 5, 2, 8, 6, 1, 7, 9}
+	\setrow{2}{2, 8, 7, 4, 1, 9, 6, 3, 5}
+	\setrow{3}{9, 6, 1, 5, 3, 7, 2, 8, 4}
+	\setrow{4}{7, 1, 3, 9, 2, 4, 8, 5, 6}
+	\setrow{5}{4, 2, 6, 8, 5, 3, 7, 9, 1}
+	\setrow{6}{8, 5, 9, 7, 6, 1, 4, 2, 3}
+	\setrow{7}{1, 9, 8, 3, 4, 2, 5, 6, 7}
+	\setrow{8}{6, 7, 2, 1, 9, 5, 3, 4, 8}
+	\setrow{9}{5, 3, 4, 6, 7, 8, 9, 1, 2}
+	\end{sudoku}
+\end{figure}
+
+Ao correr a função \code{well\_posed} com o tabuleiro inicial do exemplo
+anterior leva a \code{unsat}, o que indica que este é \code{well\_posed}, ou
+seja, possui
+apenas uma solução. Correndo \code{well\_posed} com um tabuleiro inicial mais
+benevolente como o que se apresenta leva a que este possua múltiplas soluções,
+pelo que não é \code{well\_posed}.
+
+
+\begin{figure}
+   \caption{Tabuleiro inicial de \code{well\_posed}}
+	\centering
+	\begin{sudoku}[scale=.5]
+		\setrow{1}{,,,,,,,,}
+		\setrow{2}{,9,,,,8,,,}
+		\setrow{3}{,,,,,,,6,}
+		\setrow{4}{,,4,3,,,,,}
+		\setrow{5}{,,,,,,,,}
+		\setrow{6}{,,,,2,,,,}
+		\setrow{7}{,,,,,9,,,}
+		\setrow{8}{,,2,,,,,,}
+		\setrow{9}{1,,,,,,7,,}
+	\end{sudoku}
+\end{figure}
+
+Ao correr a função \code{generate} com o tabuleiro inicial do exemplo do
+sudoku e com o padrão \code{pat1} declarado na função \code{main} leva a um
+puzzle que não é \code{well\_posed}. Correndo com \code{pat2} leva um problema
+\code{well\_posed}.
+
+A execução de qualquer função é realizada após a sua chamada na função
+\code{main} onde podem ser passados como argumentos os tabuleiros e padrões
+declarados na mesma. Por defeito a função \code{main} chama uma função de cada
+tipo com o tabuleiro do exemplo do \code{sudoku(P1)}. Para testar com outros
+valores basta chamar a função no \code{main} com os argumentos pretendidos.
+
+
+
+
+
 
 \subsection{Variantes}
 Nas variantes aplicamos pura e simplesmente as restrições usuais,
@@ -200,7 +296,8 @@ exemplos dados no código.
 
 \section{\sums}
 \subsection{Descrição do problema}
-Queremos reduzir a questão de decidir se $\exists S\subseteq R : \sum S = t$
+Queremos reduzir a questão de, dado $R\subseteq\mathbb N$ e $t\in\mathbb N$,
+decidir se $\exists S\subseteq R : \sum S = t$
 (para $R$ e $t$ fixos mas arbitrários) para um problema de satisfação booleana.
 Mas este caso
 é mais bicudo do
@@ -211,9 +308,9 @@ Para qualquer um dos problemas, há três complexidades que nos interessam: a
 original, a final e a da redução. 
 \sums está claramente em \np. Como \sat é \np-completo, também sabemos que
 existe uma redução \emph{polinomial} de \sums para \sat.
-O nosso problema, que
+O nosso problema aqui, problema esse que
 no Sudoku não surge, é que há duas reduções
-óbvias, uma com muitos ($2^{\#R}$) e outra com poucos ($\#R$) símbolos
+óbvias \---- uma com muitos ($2^{\#R}$) e outra com poucos ($\#R$) símbolos
 proposicionais, mas ambas
 exponenciais:
 \begin{itemize}
@@ -233,7 +330,8 @@ exponenciais:
 Dado que o melhor algoritmo que temos para \sat é exponencial, não queremos
 encontrar uma codificação de \sums em \sat que seja exponencial também, porque
 para não falar que à partida isso nos dá uma exponencial dupla, há uma
-questão mais relevante, que é não respeitar o espírito da redução de problemas.
+questão mais relevante, que é não respeitar o espírito da redução de problemas;
+queremos que a redução seja polinomial.
 
 \subsection{Símbolos proposicionais e restrições}
 Surge então a ideia de fazer $p_{u,r}$ em que $u\in R$ é o último dígito e
@@ -246,39 +344,27 @@ ou não \---- dizendo não, obtemos:
    \bigvee_{w}p_{w,r-w}
    \right)
 \end{align}
-significando...
+significando que qualquer resto $r$ que tenhamos, há de haver um símbolo $w$
+que podemos ler para nos aproximarmos de $t$ por mais $w$ unidades (pelo que o
+novo resto será $r-w$).
 %$p_{4,3}$ ou $p_{4,7}$ ou algo do género
 % dizendo sim, ... etc
-tendo em atenção que:
+
+em atenção que:
 \begin{notç}
    Nesta secção tomamos sempre $u,w\in R$ e $r,s\in\{0,\cdots,t\}$.
 \end{notç}
 
-Queremos podar ao máximo a árvore \label{...}
-isto resulta numa condição de unicidade, até certo ponto
-Se nos falta $r$ para alcançar $t$ com $u$ como último símbolo lido,
-certamente não nos falta outro valor com o mesmo símbolo lido,
-nem tão pouco falta o mesmo valor com outro último símbolo lado
-(isto proíbe permutações, por exemplo).
-\begin{align}
-      \bigwedge_{u,r}\left( p_{u,r}
-   \implies
-      \bigwedge_{w\neq u}\lnot p_{w,r}
-         \land
-      \bigwedge_{s\neq r}\lnot p_{u,s}
-   \right)
-\end{align}
 
-
-\begin{figure}%[h]
+\begin{figure}[h]
 \begin{minipage}{0.4\textwidth}
    \centering
-   \begin{tikzpicture}[node distance=1.5cm]
+   \begin{tikzpicture}[node distance=2cm]
       % níveis 0 e 1
-      \node(p43)                    {$p_{4,3}$};
-      \node(p25)  [left of=p43]     {$p_{2,5}$};
-      \node(p16)  [left of=p25]     {$p_{1,6}$};
-      \node(p07)  [above of=p25] {$p_{\varnothing,7}$};
+      \node(p43)                    {$\boldsymbol{p_{4,3}}$};
+      \node(p25)  [left of=p43]     {$\boldsymbol{p_{2,5}}$};
+      \node(p16)  [left of=p25]     {$\boldsymbol{p_{1,6}}$};
+      \node(p07)  [above of=p25] {$(p_{\varnothing,7})$};
 
       \seta(p07) -- (p16);
       \seta(p07) -- (p25);
@@ -309,6 +395,25 @@ nem tão pouco falta o mesmo valor com outro último símbolo lado
 \end{minipage}
 \hfill
 \begin{minipage}{0.4\textwidth}
+   Esta primeira restrição dá-nos uma noção visual das proposições organizadas
+   numa árvore, em que começamos sem ter lido nada e faltando tudo,
+   gradualmente adicionando ramos para cada símbolo possível a ler.
 \end{minipage}
 \end{figure}
+
+Queremos podar ao máximo a árvore \label{...}
+isto resulta numa condição de unicidade, até certo ponto
+Se nos falta $r$ para alcançar $t$ com $u$ como último símbolo lido,
+certamente não nos falta outro valor com o mesmo símbolo lido,
+nem tão pouco falta o mesmo valor com outro último símbolo lado
+(isto proíbe permutações, por exemplo).
+\begin{align}
+      \bigwedge_{u,r}\left( p_{u,r}
+   \implies
+      \bigwedge_{w\neq u}\lnot p_{w,r}
+         \land
+      \bigwedge_{s\neq r}\lnot p_{u,s}
+   \right)
+\end{align}
+
 \end{document}
