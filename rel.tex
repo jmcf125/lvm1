@@ -105,7 +105,7 @@ pode ser dividida em duas:
         os restantes números da linha, coluna e região serão influenciados.
         \begin{align}
         \bigwedge_{0\leq i,j < 9}
-           \bigwedge_{1\leq k < m < 9}
+           \bigwedge_{1\leq k < m \leq 9}
            {\lnot p_{i,j,k} \lor \lnot p_{i,j,m}}
         \end{align}
 
@@ -211,11 +211,13 @@ de mostrar a sua correção.
 	\end{sudoku}
 \end{figure}
 
+Correr a função \code{sudoku} com o tabuleiro da Figura 1, presente também no enunciado, devolve uma solução que podemos verificar ser correta.
+
 Ao correr a função \code{well\_posed} com o tabuleiro inicial do exemplo
 anterior leva a \code{unsat}, o que indica que este é \code{well\_posed}, ou
 seja, possui
 apenas uma solução. Correndo \code{well\_posed} com um tabuleiro inicial mais
-benevolente como o que se apresenta leva a que este possua múltiplas soluções,
+benevolente como o que se apresenta na Figura 3 leva a que este possua múltiplas soluções,
 pelo que não é \code{well\_posed}.
 
 
@@ -235,15 +237,15 @@ pelo que não é \code{well\_posed}.
 	\end{sudoku}
 \end{figure}
 
-Ao correr a função \code{generate} com o tabuleiro inicial do exemplo do
-sudoku e com o padrão \code{pat1} declarado na função \code{main} leva a um
+
+Ao correr a função \code{generate} com o tabuleiro da Figura 1 e com o padrão \code{pat1} declarado na função \code{main} leva a um
 puzzle que não é \code{well\_posed}. Correndo com \code{pat2} leva um problema
 \code{well\_posed}.
 
 A execução de qualquer função é realizada após a sua chamada na função
 \code{main} onde podem ser passados como argumentos os tabuleiros e padrões
 declarados na mesma. Por defeito a função \code{main} chama uma função de cada
-tipo com o tabuleiro do exemplo do \code{sudoku(P1)}. Para testar com outros
+tipo com o tabuleiro da Figura 1. Para testar com outros
 valores basta chamar a função no \code{main} com os argumentos pretendidos.
 
 
