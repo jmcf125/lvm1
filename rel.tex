@@ -3,7 +3,26 @@
 \usepackage{tikz}    % diagramas
 \usepackage{amsmath} % align
 \usepackage{amssymb} % mathbb, varnothing
+\usepackage{amsthm}  % teoremas
 \usepackage{xspace}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definição}[section]
+\newtheorem*{defn-alt}{Definição alternativa}
+\newtheorem{ax}[defn]{Axioma}
+
+\theoremstyle{theorem}
+\newtheorem{teor}[defn]{Teorema}
+\newtheorem{prop}[defn]{Proposição}
+\newtheorem{conj}[defn]{Conjectura}
+\newtheorem{lema}[defn]{Lema}
+\newtheorem{coro}[defn]{Corolário}
+
+\theoremstyle{remark}
+\newtheorem{nota}[defn]{Nota}
+\newtheorem{notç}[defn]{Notação}
+\newtheorem{expl}[defn]{Exemplo}
+\newtheorem{cexpl}[defn]{Contra-exemplo}
 
 \usetikzlibrary{arrows.meta} % para mudar o tamanho das cabeças das setas
 
@@ -121,7 +140,7 @@ pode ser dividida em duas:
 
 \subsection{Funções}
 A implementação recorreu a três funções principais: \code{sudoku},
-\code{well_posed} e \code{generate}.
+\code{well\_posed} e \code{generate}.
 
 A função \code{sudoku} gera os símbolos proposicionais, aplica as restrições
 indicadas e verifica se existe solução.
@@ -136,33 +155,120 @@ A função \code{generate(S, pat)} remove os elementos de S de acordo com o
 padrão e chama a função \code{well\_posed} com o resultado.
 
 \subsection{Variantes}
+Nas variantes aplicamos pura e simplesmente as restrições usuais,
+adicionando condições sobre coisas próximas, já que reparámos em
+paralelos entre as variantes todas \---- em geral, exigem que
+as células vizinhas (determinadas por \code{deltas\_dist})
+sejam diferentes da atual após aplicar \code{deltas\_vals}.
+
+Como
+descrevem os comentários no código mais pormenorizadamente, para
+\code{deltas\_vals=[0]} isto é só verificar que as células vizinhas
+são \code{diferentes} da atual.
+
+\begin{notç}
+   Aqui consideramos sempre $i,j,n\in\mathbb N\cap[1,9]$.
+   Para clareza, em vez de $p_{i,j,k}$ escrevemos $c_{i,j}=k$. Como temos
+   as restrições usuais em vigor,
+   \begin{align}
+      c_{i,j}=k\land c_{i,j}=k' \implies k = k'
+   \end{align}
+   por exemplo. Ou seja, neste contexto o símbolo de igualdade é uma notação
+   útil que já não nos
+   induzirá em erro.
+\end{notç}
+
+\begin{defn}
+\begin{align}
+   \mathtt{diferentes}(\Delta, V) :=%\nonumber\\
+   &\bigwedge_{i,j,n}
+   \bigwedge_{\substack{c'\in\Delta+'c_{i,j}\\\nu\in V}}
+   (c_{i,j} = n
+      \implies
+   c' \neq n + \nu)
+\end{align}
+onde
+\begin{align}
+   \delta &= (\delta_1,\delta_2)\in \Delta\\
+   \Delta+'c &= \{c_{(i,j)+\delta}:\delta\in\Delta\}\cap\{1,\cdots,9\}^2
+\end{align}
+para garantir que não saímos do tabuleiro.
+\end{defn}
+
+Isto é suficiente para resolver o problema proposto, como se pode verificar nos
+exemplos dados no código.
 
 \section{\sums}
 \subsection{Descrição do problema}
-Sudoku mas com cenas extra
+Queremos reduzir a questão de decidir se $\exists S\subseteq R : \sum S = t$
+(para $R$ e $t$ fixos mas arbitrários) para um problema de satisfação booleana.
+Mas este caso
+é mais bicudo do
+que o sudoku...
 
 \subsection{Observações sobre a Complexidade}
 Para qualquer um dos problemas, há três complexidades que nos interessam: a
 original, a final e a da redução. 
-\sums está claramente em \np.
-Aqui, há duas
-No Sudoku este problema não surge, mas aqui sim, porque há duas reduções
-óbvias, ambas exponenciais:
+\sums está claramente em \np. Como \sat é \np-completo, também sabemos que
+existe uma redução \emph{polinomial} de \sums para \sat.
+O nosso problema, que
+no Sudoku não surge, é que há duas reduções
+óbvias, uma com muitos ($2^{\#R}$) e outra com poucos ($\#R$) símbolos
+proposicionais, mas ambas
+exponenciais:
 \begin{itemize}
-   \item num extremo, temos $p_r$ para cada $r\in R$ Neste caso, encontrar
-      $S=\{r_{i_1},\cdots r_{i_j}\}$ é o mesmo que encontrar uma valoração
-      Mas definir as restrições é equivalente a encontrar uma valoração
+   \item $p_r$ para cada $r\in R$. Neste caso, encontrar
+      $S=\{r_{i_1},\cdots r_{i_n}\}$ é o mesmo que encontrar uma valoração
+      de $p_{r_{i_j}}$ tal que $\sum_j r_{i_j}=t$.
+      Mas para definir assim este tipo de restrições é, tanto quanto sabemos,
+      necessário
+      encontrar essa valoração, como nos mostra \code{sums\_red\_exp}.
 
-   \item Noutro, temos $p_S$ para cada $S\subseteq R$, em que $p_S=\top$ sse
-      $S$ satisfaz o pedido
-      Aqui a explosão exponencial acontece logo no número de proposições, a
-      resolução do SAT só aparece depois de resolver o problema
+   \item $p_S$ para cada $S\subseteq R$, em que $p_S$ 
+      é verdade \emph{sse} $S$ satisfaz o pedido.
+      Aqui a explosão exponencial acontece logo no número de proposições a
+      serem analisadas.
 \end{itemize}
 
+Dado que o melhor algoritmo que temos para \sat é exponencial, não queremos
+encontrar uma codificação de \sums em \sat que seja exponencial também, porque
+para não falar que à partida isso nos dá uma exponencial dupla, há uma
+questão mais relevante, que é não respeitar o espírito da redução de problemas.
+
+\subsection{Símbolos proposicionais e restrições}
 Surge então a ideia de fazer $p_{u,r}$ em que $u\in R$ é o último dígito e
 $r\in [0,t]\cap\mathbb N$ representa quanto falta para chegarmos a $t$.
+Temos que ter cuidado se a notação indica que o $u$ já foi contabilizado em $r$
+ou não \---- dizendo não, obtemos:
+\begin{align}
+   \bigwedge_{u,r}\left( p_{u,r}
+   \implies
+   \bigvee_{w}p_{w,r-w}
+   \right)
+\end{align}
+significando...
+%$p_{4,3}$ ou $p_{4,7}$ ou algo do género
+% dizendo sim, ... etc
+tendo em atenção que:
+\begin{notç}
+   Nesta secção tomamos sempre $u,w\in R$ e $r,s\in\{0,\cdots,t\}$.
+\end{notç}
 
-Temos que ter cuidado se a notação é $p_{4,3}$ ou $p_{4,7}$ ou algo do género
+Queremos podar ao máximo a árvore \label{...}
+isto resulta numa condição de unicidade, até certo ponto
+Se nos falta $r$ para alcançar $t$ com $u$ como último símbolo lido,
+certamente não nos falta outro valor com o mesmo símbolo lido,
+nem tão pouco falta o mesmo valor com outro último símbolo lado
+(isto proíbe permutações, por exemplo).
+\begin{align}
+      \bigwedge_{u,r}\left( p_{u,r}
+   \implies
+      \bigwedge_{w\neq u}\lnot p_{w,r}
+         \land
+      \bigwedge_{s\neq r}\lnot p_{u,s}
+   \right)
+\end{align}
+
 
 \begin{figure}%[h]
 \begin{minipage}{0.4\textwidth}
@@ -178,7 +284,7 @@ Temos que ter cuidado se a notação é $p_{4,3}$ ou $p_{4,7}$ ou algo do géner
       \seta(p07) -- (p25);
       \seta(p07) -- (p43);
 
-      % nível 2
+      % nível 2   -- criar relevo aqui
       \node(x1)  [below left of=p16]   {$\vdots$};
       \node(x2)  [below right of=x1]   {$\vdots$};
       \node(x3)  [right of=x1]         {$\vdots$};

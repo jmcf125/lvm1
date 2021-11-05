@@ -12,6 +12,7 @@ def excepto(R,E):
     return R2
 
 #Cria powerset do set inicial
+# TODO: fazer com conjuntos em vez de listas
 def partes(R):
     ps = [partes(excepto(R,[r])) for r in R]
     return [R] + [S for P in ps for S in P]
@@ -35,8 +36,10 @@ def sums_red_exp(R,t):
         s.add(And([And(p[r], Not(p[r])) for r in R]))
 
     check = s.check()
+    def props():
+        return [q for q in s.model().decls() if s.model()[q]]
 
-    return False if check == unsat else s.model().decls()
+    return False if check == unsat else props()
 
 
 # Esta é que é a redução polinomial de SUMS para SAT
