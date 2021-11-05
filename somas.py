@@ -109,6 +109,10 @@ def sums(R,t):
         # (isto não dá o mesmo do que a restr. acima?)
         #s.add(Implies(p[u][r], Or([p[w][r-w] for w in R])))
 
+    # Parece que o programa passa muito mais tempo a criar as restrições do que
+    # a verificá-las, provàvelmente porque o Python não optimiza chamadas a
+    # funções.
+    #print("começar verif")
     check = s.check()
     #print(s)
 
