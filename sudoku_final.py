@@ -281,7 +281,7 @@ def main():
 
 
     # -- Generate --
-    # -- Necessita de (checkn, sn, ln, Propn) = ... antes de correr generate --
+    # -- Necessita de (check, s, l, Prop) = ... antes de correr generate --
     if(check == sat):
          model = s.model()
          new_P = generate(solution_board(model), pat2)
