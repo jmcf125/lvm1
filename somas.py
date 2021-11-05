@@ -61,7 +61,7 @@ def sums(R,t):
     # Começamos em alguma coisa (já que não podemos ter p_0_t)
     s.add(Or([p[u][t-u] for u in R if u in range(t+1)]))
 
-    # Não podemos exceder t (mas isto chega?)
+    # Não podemos exceder t
     for u in R:
      for r in range(t+1):
       if u + r > t:
@@ -86,28 +86,10 @@ def sums(R,t):
     # (isto já é possìvelmente consequência das conds. anteriores)
     for r in range(t+1):
      for u in R:
-      if r + u <= t and r != 0:
-      # justificar isto!
-      #if r - u > 0: # hmm...
-         #if r + u <= t:# and r != 0:
-        #p[r][0] => existe u t.q. p[u][r]
-        # no geral:
-        # cada (u,r) veio de algum (w,r+u):
-        # (pois esta não pode dar, u não inclui o valor de r)
-        #s.add(Implies(p[u][r], Or([p[w][r+u] for w in R])))
+      if r != 0:
         s.add(Implies(p[u][r],
             Or([p[w][r-w] for w in R
                           if r-w in range(t+1)])))
-        #s.add(Implies(Or([p[w][r+u] for w in R]), p[u][r]))
-        # cada (u,r), vindo de (w,r+u), não veio de (v,r+u) para v != w:
-        # (isto parece desnecessário)
-        #for w in R:
-         #s.add(Implies(p[u][r], And([
-             ##Implies(p[w][r+u], Not(p[v][r+u]))
-             #for v in R if v != w])))
-        # cada (u,r) vai para um (w,r-w):
-        # (isto não dá o mesmo do que a restr. acima?)
-        #s.add(Implies(p[u][r], Or([p[w][r-w] for w in R])))
 
     # Parece que o programa passa muito mais tempo a criar as restrições do que
     # a verificá-las, provàvelmente porque o Python não optimiza chamadas a
@@ -129,6 +111,7 @@ def main():
     R.append(0)
     R.append(3)
     R.append(5)
+    R.append(500)
     t = 74
 
     S = sums(R,t)

@@ -1,5 +1,6 @@
 \documentclass[a4paper,12pt]{article}
 
+\usepackage[portuguese]{babel}
 \usepackage{tikz}    % diagramas
 \usepackage{amsmath} % align
 \usepackage{amssymb} % mathbb, varnothing
@@ -327,19 +328,33 @@ exponenciais:
       serem analisadas.
 \end{itemize}
 
-Dado que o melhor algoritmo que temos para \sat é exponencial, não queremos
+Dado que o melhor algoritmo que temos para \sat é (no geral) exponencial, não
+queremos
 encontrar uma codificação de \sums em \sat que seja exponencial também, porque
-para não falar que à partida isso nos dá uma exponencial dupla, há uma
-questão mais relevante, que é não respeitar o espírito da redução de problemas;
+à partida isso dá uma exponencial dupla. Há também uma
+questão mais relevante, que é não respeitar o espírito da redução de problemas:
 queremos que a redução seja polinomial.
 
 \subsection{Símbolos proposicionais e restrições}
-Surge então a ideia de fazer $p_{u,r}$ em que $u\in R$ é o último dígito e
-$r\in [0,t]\cap\mathbb N$ representa quanto falta para chegarmos a $t$.
+\begin{notç}
+   Nesta secção tomamos sempre
+   \begin{align}
+      u,w&\in R\\
+      r,s&\in \mathbb N\cap[0,t]
+   \end{align}
+\end{notç}
+
+Surge então a ideia de fazer $p_{u,r}$ em que $u$ é o último dígito lido e
+$r$ representa quanto falta para chegarmos a $t$.
+Isto dá-nos $\#R\times(t+1)$ símbolos proposicionais.
 Temos que ter cuidado se a notação indica que o $u$ já foi contabilizado em $r$
-ou não \---- dizendo não, obtemos:
+ou não \---- dizendo não, obtemos:\footnote{
+   O cuidado $r\neq 0$ é necessário: lembremo-nos que $\bigvee\varnothing=\bot$,
+   e certamente não queremos que $p_{u,0}\implies\bot$ para qualquer $u$.
+}
 \begin{align}
-   \bigwedge_{u,r}\left( p_{u,r}
+   \bigwedge_{r\neq0}
+   \bigwedge_{u}\left( p_{u,r}
    \implies
    \bigvee_{w}p_{w,r-w}
    \right)
@@ -350,14 +365,9 @@ novo resto será $r-w$).
 %$p_{4,3}$ ou $p_{4,7}$ ou algo do género
 % dizendo sim, ... etc
 
-em atenção que:
-\begin{notç}
-   Nesta secção tomamos sempre $u,w\in R$ e $r,s\in\{0,\cdots,t\}$.
-\end{notç}
 
-
-\begin{figure}[h]
-\begin{minipage}{0.4\textwidth}
+\begin{figure}
+%\begin{minipage}{0.4\textwidth}
    \centering
    \begin{tikzpicture}[node distance=2cm]
       % níveis 0 e 1
@@ -392,20 +402,35 @@ em atenção que:
       \seta(p12) -- (p10);
       \seta(p21) -- (p20);
    \end{tikzpicture}
-\end{minipage}
-\hfill
-\begin{minipage}{0.4\textwidth}
-   Esta primeira restrição dá-nos uma noção visual das proposições organizadas
-   numa árvore, em que começamos sem ter lido nada e faltando tudo,
-   gradualmente adicionando ramos para cada símbolo possível a ler.
-\end{minipage}
+   \caption{Exemplo de uma árvore a partir de $R=\{1,2,4\}$ e
+      $t=7$.}
+%\end{minipage}
+%\hfill
 \end{figure}
 
-Queremos podar ao máximo a árvore \label{...}
-isto resulta numa condição de unicidade, até certo ponto
+Esta primeira restrição dá-nos uma noção visual das proposições organizadas
+numa árvore, em que começamos sem ter lido nada e faltando tudo,
+gradualmente adicionando ramos para cada símbolo possível a ler.
+Poderíamos ter uma proposição extra $(p_{\varnothing,r})$; em vez
+      disso temos:
+\begin{align}
+   \bigvee_{u} p_{u,t}
+\end{align}
+
+Queremos podar ao máximo a árvore: afinal de contas, queremos uma
+única solução, um
+caminho de algum $p_{u,t}$ até algum $p_{w,0}$.
+Isto resulta em certas condição de unicidade, até certo ponto.
+ Primeiro exigimos existência de solução:
+\begin{align}
+   \bigvee_{u} p_{u,0}
+\end{align}
+
+Poderíamos incluir $\bigwedge_{u\neq w} p_{u,0}\to\lnot p_{w,0}$, mas
+a condição seguinte já basta.
 Se nos falta $r$ para alcançar $t$ com $u$ como último símbolo lido,
 certamente não nos falta outro valor com o mesmo símbolo lido,
-nem tão pouco falta o mesmo valor com outro último símbolo lado
+nem tão pouco falta o mesmo valor com outro último símbolo lido
 (isto proíbe permutações, por exemplo).
 \begin{align}
       \bigwedge_{u,r}\left( p_{u,r}
@@ -415,5 +440,24 @@ nem tão pouco falta o mesmo valor com outro último símbolo lado
       \bigwedge_{s\neq r}\lnot p_{u,s}
    \right)
 \end{align}
+
+Também é verdade que não podemos exceder $t$, embora esta condição não seja
+estritamente necessária.
+\begin{align}
+   \bigwedge_{u+r>t} \lnot p_{u,r}
+\end{align}
+
+\subsection{Um exemplo}
+Para o caso
+\begin{align*}
+   R&=\{0,1,2,3,4,5,8,16,32,64,500\}\\
+   t&=74
+\end{align*}
+\texttt{sums(R,t)} resulta
+em:
+\begin{verbatim}
+[p_2_0, p_4_70, p_3_67, p_64_2, p_1_66]
+[2, 4, 3, 64, 1]
+\end{verbatim}
 
 \end{document}
