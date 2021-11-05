@@ -1,0 +1,410 @@
+\documentclass[a4paper,12pt]{beamer}
+
+\usepackage[portuguese]{babel}
+\usepackage{tikz}    % diagramas
+\usepackage{amsmath} % align
+\usepackage{amssymb} % mathbb, varnothing
+\usepackage{amsthm}  % teoremas
+\usepackage{xspace}
+\usepackage{logicpuzzle}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definição}[section]
+\newtheorem*{defn-alt}{Definição alternativa}
+\newtheorem{ax}[defn]{Axioma}
+
+\theoremstyle{theorem}
+\newtheorem{teor}[defn]{Teorema}
+\newtheorem{prop}[defn]{Proposição}
+\newtheorem{conj}[defn]{Conjectura}
+\newtheorem{lema}[defn]{Lema}
+\newtheorem{coro}[defn]{Corolário}
+
+\theoremstyle{remark}
+\newtheorem{nota}[defn]{Nota}
+\newtheorem{notç}[defn]{Notação}
+\newtheorem{expl}[defn]{Exemplo}
+\newtheorem{cexpl}[defn]{Contra-exemplo}
+
+\usetikzlibrary{arrows.meta} % para mudar o tamanho das cabeças das setas
+
+\newcommand{\seta}{\draw[-{>[scale=2,width=2]},line width=0.5pt]}
+\newcommand{\sums}{\texttt{SUMS}\xspace}
+\newcommand{\sat}{\texttt{SAT}\xspace}
+\newcommand{\np}{\textbf{NP}\xspace}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\newenvironment{sudoku}[1][]{%
+\begin{logicpuzzle}[rows=9,columns=9,#1]
+	\begin{puzzleforeground}
+		\framepuzzle
+		\framearea{black}{(1,1)--(4,1)--(4,4)--(1,4)--cycle}
+		\framearea{black}{(4,1)--(7,1)--(7,4)--(4,4)--cycle}
+		\framearea{black}{(7,1)--(10,1)--(10,4)--(7,4)--cycle}
+		\framearea{black}{(1,4)--(4,4)--(4,7)--(1,7)--cycle}
+		\framearea{black}{(4,4)--(7,4)--(7,7)--(4,7)--cycle}
+		\framearea{black}{(7,4)--(10,4)--(10,7)--(7,7)--cycle}
+		\framearea{black}{(1,7)--(4,7)--(4,10)--(1,10)--cycle}
+		\framearea{black}{(4,7)--(7,7)--(7,10)--(4,10)--cycle}
+		\framearea{black}{(7,7)--(10,7)--(10,10)--(7,10)--cycle}
+	
+	\end{puzzleforeground}
+}{\end{logicpuzzle}}
+
+\title{Projeto 1: \sat em {Z3}}
+\author{João Miguel Faria \and Rui Breda Perdigoto}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+\begin{frame}
+   \frametitle{Índice}
+   \tableofcontents%[pausesections]
+\end{frame}
+
+\section{Sudoku}
+
+\subsection{Símbolos Proposicionais}
+\begin{frame}
+\frametitle{Símbolos Proposicionais}
+Símbolos proposicionais 
+   \begin{align*}
+      &p_{i,j,n}\\
+      0&\leq i, j \leq 8\\
+      1&\leq n \leq 9
+   \end{align*}
+\end{frame}
+
+\subsection{Condições e restrições}
+\begin{frame}
+\frametitle{Condições e restrições}
+\begin{itemize}
+     \item 1 número por célula
+        \begin{align}
+        \bigwedge_{0\leq i,j < 9}
+           \bigvee_{1\leq n \leq 9} p_{i,j,n}
+        \end{align}
+     
+        \begin{align}
+        \bigwedge_{0\leq i,j < 9}
+           \bigwedge_{1\leq k < m < 9}
+           {\lnot p_{i,j,k} \lor \lnot p_{i,j,m}}
+        \end{align}
+        \pause
+      \item Linhas e colunas sem repetições
+         \begin{align}
+         \bigwedge_{0\leq i < 9} \bigwedge_{1\leq k \leq 9} \bigwedge_{0\leq j < m
+         < 9} \lnot p_{i,j,k}
+         \lor \lnot p_{i,m,k}
+         \end{align}
+
+         \begin{align}
+         \bigwedge_{0\leq i < 9} \bigwedge_{1\leq k < 9} 
+            \bigwedge_{0\leq j < m < 9}
+               \lnot p_{j,i,k} \land \lnot p_{m,i,k}
+         \end{align}
+         
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+     \item Regiões sem repetições
+        %$c$ é o índice da primeira coluna da
+        %região e $b = i+(2 - i \bmod 3)$, que representa o índice da última
+        %linha da região.
+     \begin{align}
+        \bigwedge_{0\leq i < 9}
+        \bigwedge_{1\leq k \leq 9}
+        \bigwedge_{0\leq j < 9}
+        \bigwedge_{i + 1 \leq n < b}
+        \bigwedge_{c\leq l < c+3} \lnot p_{i,j,k} \lor \lnot p_{n,l,k}
+     \end{align}
+     
+        \pause
+     \item $S$ com os símbolos do tabuleiro inicial
+        \begin{align}
+        \bigwedge_{p\in S} p
+        \end{align}
+     
+        \pause
+     \item \texttt{well\_posed(P)} tem uma
+        restrição extra, dado um conjunto $M$ com uma solução
+        \begin{align}
+        \bigvee_{p\in M} \lnot p
+        \end{align}
+\end{itemize}
+\end{frame}
+
+\subsection{Execução do programa}
+
+\begin{frame}
+\frametitle{Execução do programa}
+\begin{figure}
+	\caption{Tabuleiro inicial}
+	\centering
+	\begin{sudoku}[scale=.5]
+		\setrow{1}{, , , , 8, , , 7, 9}
+		\setrow{2}{, , , 4, 1, 9, , , 5}
+		\setrow{3}{, 6, , , , , 2, 8, }
+		\setrow{4}{7, , , , 2, , , , 6}
+		\setrow{5}{4, , , 8, , 3, , , 1}
+		\setrow{6}{8, , , , 6, , , , 3}
+		\setrow{7}{, 9, 8, , , , , 6, }
+		\setrow{8}{6, , , 1, 9, 5, , , }
+		\setrow{9}{5, 3, , , 7, , , , }
+	\end{sudoku}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\begin{figure}
+   \caption{Puzzle resolvido após \code{sudoku(P)}}
+	\centering
+	\begin{sudoku}[scale=.5]
+	\setrow{1}{3, 4, 5, 2, 8, 6, 1, 7, 9}
+	\setrow{2}{2, 8, 7, 4, 1, 9, 6, 3, 5}
+	\setrow{3}{9, 6, 1, 5, 3, 7, 2, 8, 4}
+	\setrow{4}{7, 1, 3, 9, 2, 4, 8, 5, 6}
+	\setrow{5}{4, 2, 6, 8, 5, 3, 7, 9, 1}
+	\setrow{6}{8, 5, 9, 7, 6, 1, 4, 2, 3}
+	\setrow{7}{1, 9, 8, 3, 4, 2, 5, 6, 7}
+	\setrow{8}{6, 7, 2, 1, 9, 5, 3, 4, 8}
+	\setrow{9}{5, 3, 4, 6, 7, 8, 9, 1, 2}
+	\end{sudoku}
+\end{figure}
+\end{frame}
+
+%Ao correr a função \code{well\_posed} com o tabuleiro inicial do exemplo
+%anterior leva a \code{unsat}, o que indica que este é \code{well\_posed}, ou
+%seja, possui
+%apenas uma solução. Correndo \code{well\_posed} com um tabuleiro inicial mais
+%benevolente como o que se apresenta leva a que este possua múltiplas soluções,
+%pelo que não é \code{well\_posed}.
+
+
+\begin{frame}
+\begin{figure}
+   \caption{Tabuleiro inicial de \code{well\_posed}}
+	\centering
+	\begin{sudoku}[scale=.5]
+		\setrow{1}{,,,,,,,,}
+		\setrow{2}{,9,,,,8,,,}
+		\setrow{3}{,,,,,,,6,}
+		\setrow{4}{,,4,3,,,,,}
+		\setrow{5}{,,,,,,,,}
+		\setrow{6}{,,,,2,,,,}
+		\setrow{7}{,,,,,9,,,}
+		\setrow{8}{,,2,,,,,,}
+		\setrow{9}{1,,,,,,7,,}
+	\end{sudoku}
+\end{figure}
+\end{frame}
+
+
+\subsection{Variantes}
+\begin{frame}
+\frametitle{Variantes}
+Células vizinhas \---- \code{deltas\_dist}
+
+\code{deltas\_vals=[0]} \---- células vizinhas $\neq$ célula atual
+\end{frame}
+
+\begin{frame}
+\begin{notç}
+   \begin{align}
+      i,j,n &\in\mathbb N\cap[1,9]\\
+      (c_{i,j}=k) &:= p_{i,j,k}
+   \end{align}
+   não induz em erro porque há restrições usuais, temos por exemplo:
+   \begin{align}
+      c_{i,j}=k\land c_{i,j}=k' \implies k = k'
+   \end{align}
+\end{notç}
+\end{frame}
+
+\begin{frame}
+\begin{defn}
+\begin{align}
+   \mathtt{diferentes}(\Delta, V) :=%\nonumber\\
+   &\bigwedge_{i,j,n}
+   \bigwedge_{\substack{c'\in\Delta+'c_{i,j}\\\nu\in V}}
+   (c_{i,j} = n
+      \implies
+   c' \neq n + \nu)
+\end{align}
+\pause
+onde
+\begin{align}
+   \delta &= (\delta_1,\delta_2)\in \Delta\\
+   \Delta+'c &= \{c_{(i,j)+\delta}:\delta\in\Delta\}\cap\{1,\cdots,9\}^2
+\end{align}
+para garantir que não saímos do tabuleiro.
+\end{defn}
+\end{frame}
+
+\section{\sums}
+\subsection{Descrição do problema}
+\begin{frame}
+\frametitle{Descrição do problema}
+Dados:
+\begin{align*}
+   R&\subseteq\mathbb N\\
+   t &\in\mathbb N
+\end{align*}
+\pause
+
+Queremos $\exists S\subseteq R$ tal que $\sum S = t$.
+\end{frame}
+
+\subsection{Observações sobre a Complexidade}
+\begin{frame}
+\frametitle{Observações sobre a Complexidade}
+\begin{itemize}
+   \item $p_r$ para cada $r\in R$
+      \---- exponencial ao criar restrições (\code{sums\_red\_exp})
+      \pause
+   \item $p_S$ para cada $S\subseteq R$
+      \---- exponencial no número de proposições
+\end{itemize}
+      \pause
+
+Queremos uma redução polinomial!
+\end{frame}
+
+\subsection{Símbolos proposicionais e restrições}
+\begin{frame}
+\frametitle{Símbolos proposicionais e restrições}
+\begin{notç}
+   Nesta secção tomamos sempre
+   \begin{align}
+      u,w&\in R\\
+      r,s&\in \mathbb N\cap[0,t]
+   \end{align}
+\end{notç}
+\end{frame}
+
+\begin{frame}
+Ideia:
+   \begin{align}
+   p_{u,r}
+   \end{align}
+$u$ \---- último dígito lido
+
+$r$ \---- resto até $t$
+
+$\#R\times(t+1)$ símbolos proposicionais
+
+\pause
+\begin{align}
+   \bigwedge_{r\neq0}
+   \bigwedge_{u}\left( p_{u,r}
+   \implies
+   \bigvee_{w}p_{w,r-w}
+   \right)
+\end{align}
+Podemos ler $w$ e ficar $w$ unidades mais perto de $t$.
+\footnote{
+   $r\neq 0$ porque $\bigvee\varnothing=\bot$,
+   não queremos $p_{u,0}\implies\bot \forall u$!
+}
+\end{frame}
+
+
+\begin{frame}
+\begin{figure}
+%\begin{minipage}{0.4\textwidth}
+   \centering
+   \begin{tikzpicture}[node distance=2cm]
+      % níveis 0 e 1
+      \node(p43)                    {$\boldsymbol{p_{4,3}}$};
+      \node(p25)  [left of=p43]     {$\boldsymbol{p_{2,5}}$};
+      \node(p16)  [left of=p25]     {$\boldsymbol{p_{1,6}}$};
+      \node(p07)  [above of=p25] {$(p_{\varnothing,7})$};
+
+      \seta(p07) -- (p16);
+      \seta(p07) -- (p25);
+      \seta(p07) -- (p43);
+
+      % nível 2   -- criar relevo aqui
+      \node(x1)  [below left of=p16]   {$\vdots$};
+      \node(x2)  [below right of=x1]   {$\vdots$};
+      \node(x3)  [right of=x1]         {$\vdots$};
+      \node(x4)  [below right of=x3]   {$\vdots$};
+      \node(p12) [below left of=p43]   {$p_{1,2}$};
+      \node(p21) [below right of=p43]  {$p_{2,1}$};
+
+      \seta(p16) -- (x1);
+      \seta(p16) -- (x2);
+      \seta(p25) -- (x3);
+      \seta(p25) -- (x4);
+      \seta(p43) -- (p12);
+      \seta(p43) -- (p21);
+
+      % nível 3
+      \node(p10) [below right of=p12]  {$p_{1,0}$};
+      \node(p20) [below right of=p21]  {$p_{2,0}$};
+
+      \seta(p12) -- (p10);
+      \seta(p21) -- (p20);
+   \end{tikzpicture}
+   \caption{Exemplo de uma árvore a partir de $R=\{1,2,4\}$ e
+      $t=7$.}
+%\end{minipage}
+%\hfill
+\end{figure}
+\end{frame}
+
+\begin{frame}
+Não temos $p_{\varnothing,r}$; começamos em:
+\begin{align}
+   \bigvee_{u} p_{u,t}
+\end{align}
+
+\pause
+Queremos chegar a:
+\begin{align}
+   \bigvee_{u} p_{u,0}
+\end{align}
+\end{frame}
+
+\begin{frame}
+Não é preciso $\bigwedge_{u\neq w} p_{u,0}\to\lnot p_{w,0}$, temos:
+\begin{align}
+      \bigwedge_{u,r}\left( p_{u,r}
+   \implies
+      \bigwedge_{w\neq u}\lnot p_{w,r}
+         \land
+      \bigwedge_{s\neq r}\lnot p_{u,s}
+   \right)
+\end{align}
+que já deita extras (expl. permutações, vários fins) fora.
+\end{frame}
+
+\begin{frame}
+Podemos dizer (mas não é preciso):
+\begin{align}
+   \bigwedge_{u+r>t} \lnot p_{u,r}
+\end{align}
+\end{frame}
+
+\subsection{Um exemplo}
+\begin{frame}[fragile] %https://tex.stackexchange.com/questions/140719/verbatim-in-beamer-showing-error-file-ended-while-scanning-use-of-xverbatim
+\frametitle{Um exemplo}
+Para o caso
+\begin{align*}
+   R&=\{0,1,2,3,4,5,8,16,32,64,500\}\\
+   t&=74
+\end{align*}
+\texttt{sums(R,t)} resulta
+em:
+\begin{verbatim}
+[p_2_0, p_4_70, p_3_67, p_64_2, p_1_66]
+[2, 4, 3, 64, 1]
+\end{verbatim}
+\end{frame}
+\end{document}

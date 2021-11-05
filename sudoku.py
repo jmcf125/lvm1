@@ -1,10 +1,6 @@
 from z3 import *
 
 prev_model = []
-# -- Inicializa matriz de arrays (9x9 matriz com cada entry um array de 9 numeros)
-#Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(1,10)] for j in range(9)] for i in range(9)]
-#s = Solver()
-
 
 def restrs_usuais(P):
     s = Solver()
@@ -76,53 +72,20 @@ def restrs_usuais(P):
                 # para a regiao
 
 
-    # if(s.check()==sat):
-    #     print_board(s.model())
-    #     return [sat,s.model()]
-    # else:
-    #    print("unsat")
-    #    return [unsat, []]
-                            #print([Prop[i][j][k], Prop[n][p][k]])
-
     return (s, l, Prop)
 
 def sudoku(P):
     (s, l, Prop) = restrs_usuais(P)
-    #if(s.check()==sat):
-    #    #print(s.model())
-    #    print_board(s.model(), P)
-    #return
     check = s.check()
 
-    # funciona porque os índices são dígitos
-    props = [[p.name()[2], p.name()[4], p.name()[6]]
-                for p in model.decls() if model[p]]
-    for p in props:
-        P[int(p[0])][int(p[1])] = int(p[2]) + 1
-
     if (check == sat):
-       print_board(P)
+       print_board(s.model())
     else:
        print("unsat")
     return (check, s, l, Prop)
 
 
-P_sudoku_var_expl = [4,0,0, 7,0,6, 0,0,9,
-                     0,0,6, 1,5,9, 4,0,0,
-                     1,5,0, 0,8,0, 0,2,6,
 
-                     0,0,7, 0,6,0, 5,0,0,
-                     2,0,1, 0,0,0, 8,0,7,
-                     0,0,4, 0,3,0, 2,0,0,
-
-                     3,7,0, 0,1,0, 0,4,8,
-                     0,0,5, 9,4,8, 3,0,0,
-                     9,0,0, 3,0,2, 0,0,5]
-
-
-
-# == NOTE: Recebe um argumento "a mais". Se apenas puder receber P então
-# 'variantes' pode ser global
 def sudoku_var(P, variantes = [1,2]):
     (s, l, Prop) = restrs_usuais(P)
 
@@ -147,9 +110,6 @@ def sudoku_var(P, variantes = [1,2]):
                             for m in [n + dn for dn in deltas_vals]
                                 if 1 <= m <= 9]))
 
-    # Nota: nestas duas primeiras variantes, podemos optimizar as restrições
-    #       -- por expl. se a != b, então b!= a -- contudo, estas optimizações
-    #       ainda não estão implementadas.
 
     # Células a passo-de-cavalo têm de ser diferentes
     if 1 in variantes:
@@ -178,15 +138,15 @@ def sudoku_var(P, variantes = [1,2]):
 def well_posed(P):
     global prev_model
     prev_model=[]
-    # Corre sudoku(P) sem restricoes de modelo anterior
+    # --- Corre sudoku(P) sem restricoes de modelo anterior ---
     (check, s, l, Prop) = sudoku(P)
     if(check == unsat):
         return
 
     model = s.model()
     prev_model = [Prop[ int(p.name()[2]) ][ int(p.name()[4]) ][ int(p.name()[6])-1 ] for p in model.decls() if model[p]]
-    #Se o sudoku e unsat entao nao tem mais solucoes
-    #(s, l, Prop) = sudoku(P)
+
+    # --- Se o sudoku e unsat entao nao tem mais solucoes ---
     if(sudoku(P)[0] == unsat):
         print("The sudoku puzzle is well_posed")
         prev_model=[]
@@ -211,9 +171,8 @@ def generate(S, pat):
     if not S:
         return
     P = remove(S, pat)
-    print("New P:")
-    print(P)
     if well_posed(P):
+        print("Puzzle que resulta de generate() e well_posed")
         return P
     else:
         print("Remover o padrão do puzzle pedido não resulta num problema bem-posto.")
@@ -249,6 +208,7 @@ def solution_board(model):
 
 def main():
 
+    # === TABULEIROS E PADROES PARA TESTAR ===
     P1 = [[5, 3, 0, 0, 7, 0, 0, 0, 0],
          [6, 0, 0, 1, 9, 5, 0, 0, 0],
          [0, 9, 8, 0, 0, 0, 0, 6, 0],
@@ -269,15 +229,27 @@ def main():
           [0,0,0,0,0,0,0,0,0],
           [0,0,0,0,0,0,0,0,0]]
 
-    P3 = [[0,0,0,0,0,0,4,0,0],
+    P3 = [[4,0,0, 7,0,6, 0,0,9],
+          [0,0,6, 1,5,9, 4,0,0],
+          [1,5,0, 0,8,0, 0,2,6],
+          [0,0,7, 0,6,0, 5,0,0],
+          [2,0,1, 0,0,0, 8,0,7],
+          [0,0,4, 0,3,0, 2,0,0],
+          [3,7,0, 0,1,0, 0,4,8],
+          [0,0,5, 9,4,8, 3,0,0],
+          [9,0,0, 3,0,2, 0,0,5]]
+
+
+    P4 = [[1,0,0,0,0,0,7,0,0],
+          [0,0,2,0,0,0,0,0,0],
+          [0,0,0,0,0,9,0,0,0],
+          [0,0,0,0,2,0,0,0,0],
           [0,0,0,0,0,0,0,0,0],
-          [0,0,0,0,0,0,0,0,0],
-          [0,0,0,0,0,0,0,0,0],
-          [0,0,0,0,0,0,0,0,3],
-          [0,0,0,0,0,0,0,0,0],
-          [0,0,0,0,0,0,0,0,0],
-          [0,0,0,0,0,0,0,0,0],
+          [0,0,4,3,0,0,0,0,0],
+          [0,0,0,0,0,0,0,6,0],
+          [0,9,0,0,0,8,0,0,0],
           [0,0,0,0,0,0,0,0,0]]
+
     pat1 = [[0,0,1,0,0,0,1,0,0],
             [0,0,0,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0,0],
@@ -287,51 +259,47 @@ def main():
             [0,0,1,0,0,0,0,0,0],
             [0,0,0,0,0,0,1,0,0],
             [0,0,0,0,0,0,0,0,0]]
+
     pat2 = [[0,1,1,1,1,1,1,1,1],
-            [0,1,1,1,1,1,1,1,1],
+            [0,1,1,1,1,0,1,1,1],
             [1,1,1,1,1,1,1,1,1],
             [0,1,1,1,1,1,1,1,1],
+            [0,1,1,1,1,0,1,1,1],
+            [1,1,1,1,1,1,1,0,1],
             [0,1,1,1,1,1,1,1,1],
-            [1,1,1,1,1,1,1,1,1],
-            [0,1,1,1,1,1,1,1,1],
-            [0,1,1,1,1,1,1,1,1],
-            [0,1,1,1,1,1,1,1,1]]
+            [0,1,1,1,1,0,1,1,1],
+            [0,1,1,1,1,1,1,0,1]]
 
-    # sudoku(P1)
-    # sudoku(P2)
-    # well_posed(P1)
-    # well_posed(P2)
-    # (check1, s1, l1, Prop1) = sudoku(P1)
-    # (check2, s2, l2, Prop2) = sudoku(P2)
-    #
-    # if(check1 == sat):
-    #      model = s1.model()
-    #      generate(solution_board(model), pat1)
-    #
-    # if(check2 == sat):
-    #      model = s2.model()
-    #      generate(solution_board(model), pat1)
-    #
-    # sudoku(P1)
-    # sudoku(P2)
-    # well_posed(P1)
-    # well_posed(P2)
-    #sudoku(P1)
-    sudoku_var(P2,[1,2,3])
 
-    #P = P_expl
-    #Prop = [[[Bool(f'p_{i}_{j}_{k}') for k in range(l)]
-    #                                 for j in range(l)]
-    #                                 for i in range(l)]
-    #print(Prop)
-    #print(Prop[0][0][2])
+    # === CHAMADAS DE FUNCOES === #
 
-    #print_board(P)
-    # for i in range(len(P)):
-    #     for j in range(len(P)):
-    #         print(P[i][j], end=" ")
-    #     print("")
-    # sudoku(P)
+    # -- Sudoku --
+    (check, s, l, Prop) = sudoku(P1)
+
+    # -- Well_posed --
+    well_posed(P1)
+
+
+    # -- Generate --
+    # -- Necessita de (checkn, sn, ln, Propn) = ... antes de correr generate --
+    if(check == sat):
+         model = s.model()
+         new_P = generate(solution_board(model), pat2)
+         if(new_P):
+             # -- Imprime novo puzzle
+             for i in range(len(new_P)):
+                 for j in range(len(new_P)):
+                     print(new_P[i][j], end=" ")
+                 print("")
+
+
+    # -- Sudoku_var --
+    print("")
+    # -- Sudoku var recebe um array de restricoes
+    # -- Eliminar as restricoes que nao se pretende aplicar para testar
+    sudoku_var(P3,[1,2,3])
+
+
 
     return
 

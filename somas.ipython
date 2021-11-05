@@ -1,6 +1,0 @@
-num extremo, temos $p_r$ para cada $r\in R$
-Neste caso, encontrar $S=\{r_{i_1},\cdots r_{i_j}\}$ é o mesmo que encontrar uma valoração
-Mas definir as restrições é equivalente a encontrar uma valoração
-
-Noutro, temos $p_S$ para cada $S\subseteq R$, em que $\p_S=\top$ sse $S$ satisfaz o pedido
-Aqui a explosão exponencial acontece logo no número de proposições, a resolução do SAT só aparece depois de resolver o problema
